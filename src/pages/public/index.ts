@@ -1,0 +1,17 @@
+export { Home, default as HomeDefault } from './Home';
+export { Team, default as TeamDefault } from './Team';
+export { Cyclists, default as CyclistsDefault } from './Cyclists';
+export { CyclistDetail, default as CyclistDetailDefault } from './CyclistDetail';
+export { CyclistProfile, default as CyclistProfileDefault } from './CyclistProfile';
+export { Ranking, default as RankingDefault } from './Ranking';
+export { Races, default as RacesDefault } from './Races';
+export { RaceDetail, default as RaceDetailDefault } from './RaceDetail';
+export { Results, default as ResultsDefault } from './Results';
+export { Achievements, default as AchievementsDefault } from './Achievements';
+export { News, default as NewsDefault } from './News';
+export { NewsDetail, default as NewsDetailDefault } from './NewsDetail';
+export { Gallery, default as GalleryDefault } from './Gallery';
+export { Sponsors, default as SponsorsDefault } from './Sponsors';
+export { Transparency, default as TransparencyDefault } from './Transparency';
+export { Contact, default as ContactDefault } from './Contact';
+export { NotFound, default as NotFoundDefault } from './NotFound';
