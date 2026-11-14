@@ -1,89 +1,182 @@
 import { Link } from 'react-router-dom';
-import { NAV_PUBLIC } from '../../constants';
-import { useSiteSettings } from '../../hooks/useSiteSettings';
+import {
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Youtube,
+} from 'lucide-react';
+import { useSiteSettings } from '../../providers/SiteSettingsProvider';
+import { DEFAULT_WHATSAPP_MESSAGE } from '../../constants';
+import { Logo } from './Logo';
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+const EXPLORE = [
+  { label: 'Equipo', to: '/equipo' },
+  { label: 'Corredores', to: '/corredores' },
+  { label: 'Ranking', to: '/ranking' },
+  { label: 'Carreras', to: '/carreras' },
+  { label: 'Resultados', to: '/resultados' },
+];
+
+const COMMUNITY = [
+  { label: 'Noticias', to: '/noticias' },
+  { label: 'Galería', to: '/galeria' },
+  { label: 'Auspiciadores', to: '/auspiciadores' },
+  { label: 'Contacto', to: '/contacto' },
+];
+
+function fullUrl(value: string | null | undefined): string | null {
+  const text = value?.trim();
+  if (!text) return null;
+  return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+}
+
+function whatsappUrl(number: string, message: string): string {
+  const digits = number.replace(/[^\d]/g, '');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
 
 export function Footer() {
-  const { settings } = useSiteSettings();
-  const year = new Date().getFullYear();
+  const { settings, contactEmail, whatsappNumber } = useSiteSettings();
+  const socials = [
+    { label: 'Facebook', href: fullUrl(settings.facebook), icon: Facebook },
+    { label: 'Instagram', href: fullUrl(settings.instagram), icon: Instagram },
+    { label: 'TikTok', href: fullUrl(settings.tiktok), icon: Music2 },
+    { label: 'YouTube', href: fullUrl(settings.youtube), icon: Youtube },
+  ].filter((item) => item.href);
 
-  const socials: { label: string; href: string }[] = [];
-  if (settings.social_facebook) {
-    socials.push({ label: 'Facebook', href: settings.social_facebook });
-  }
-  if (settings.social_instagram) {
-    socials.push({ label: 'Instagram', href: settings.social_instagram });
-  }
-  if (settings.social_tiktok) {
-    socials.push({ label: 'TikTok', href: settings.social_tiktok });
-  }
+  const hasContact = Boolean(contactEmail || whatsappNumber || settings.address);
 
   return (
-    <footer className="bg-shark-900 text-slate-300">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-4">
-        <div>
-          <p className="text-base font-bold text-white">{settings.team_name}</p>
-          {settings.slogan ? <p className="mt-1 text-sm text-slate-400">{settings.slogan}</p> : null}
-          {socials.length > 0 ? (
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {socials.map((s) => (
-                <li key={s.label}>
+    <footer className="bg-slate-950 text-slate-300">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          <div>
+            <Logo variant="dark" />
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
+              {settings.description ||
+                'Equipo de mountain bike de Santa Cruz, Bolivia. Pasión, competencia y comunidad sobre dos ruedas.'}
+            </p>
+            {socials.length > 0 && (
+              <div className="mt-5 flex items-center gap-2">
+                {socials.map(({ label, href, icon: Icon }) => (
                   <a
-                    href={s.href}
+                    key={label}
+                    href={href!}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+                    aria-label={label}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
                   >
-                    {s.label}
+                    <Icon className="h-4 w-4" />
                   </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+              Explorar
+            </h3>
+            <ul className="mt-4 space-y-2.5">
+              {EXPLORE.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-slate-400 transition hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
-          ) : null}
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+              Comunidad
+            </h3>
+            <ul className="mt-4 space-y-2.5">
+              {COMMUNITY.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-slate-400 transition hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+              Contacto
+            </h3>
+            {hasContact ? (
+              <ul className="mt-4 space-y-3 text-sm">
+                {contactEmail && (
+                  <li>
+                    <a
+                      href={`mailto:${contactEmail}`}
+                      className="flex items-start gap-2.5 text-slate-400 transition hover:text-white"
+                    >
+                      <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                      <span className="break-all">{contactEmail}</span>
+                    </a>
+                  </li>
+                )}
+                {whatsappNumber && (
+                  <li>
+                    <a
+                      href={whatsappUrl(
+                        whatsappNumber,
+                        settings.whatsapp_message || DEFAULT_WHATSAPP_MESSAGE,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-start gap-2.5 text-slate-400 transition hover:text-white"
+                    >
+                      <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                      <span>{whatsappNumber}</span>
+                    </a>
+                  </li>
+                )}
+                {settings.address && (
+                  <li className="flex items-start gap-2.5 text-slate-400">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                    <span>{settings.address}</span>
+                  </li>
+                )}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm leading-relaxed text-slate-500">
+                Los canales de contacto se publicarán cuando estén configurados.
+              </p>
+            )}
+            <p className="mt-5 text-[11px] uppercase tracking-[0.18em] text-white/30">
+              {settings.founded_year ? `Desde ${settings.founded_year}` : 'MTB Bolivia'}
+            </p>
+          </div>
         </div>
 
-        <nav aria-label="Mapa del sitio">
-          <p className="text-sm font-semibold text-white">Explora</p>
-          <ul className="mt-3 space-y-2 text-sm">
-            {NAV_PUBLIC.map((item) => (
-              <li key={item.to}>
-                <Link to={item.to} className="hover:text-white">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div>
-          <p className="text-sm font-semibold text-white">Contacto</p>
-          <ul className="mt-3 space-y-2 text-sm">
-            {settings.contact_email ? <li>{settings.contact_email}</li> : null}
-            {settings.contact_phone ? <li>{settings.contact_phone}</li> : null}
-            {settings.address ? <li>{settings.address}</li> : null}
-            {!settings.contact_email && !settings.contact_phone && !settings.address ? (
-              <li className="text-slate-500">Pronto publicaremos nuestros datos de contacto.</li>
-            ) : null}
-          </ul>
-        </div>
-
-        <div className="rounded-xl bg-white/5 p-4">
-          <p className="text-sm font-semibold text-white">¿Quieres ser auspiciador?</p>
-          <p className="mt-1 text-sm text-slate-400">
-            Apoya al equipo y haz visible tu marca en cada carrera.
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {CURRENT_YEAR} {settings.team_name}. Todos los derechos reservados.
           </p>
-          <Link
-            to="/auspiciadores"
-            className="mt-3 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
-            Ver auspiciadores
-          </Link>
+          <div className="flex items-center gap-4">
+            <span>Santa Cruz, Bolivia</span>
+            <Link to="/admin/login" className="transition hover:text-white">
+              Acceso privado
+            </Link>
+          </div>
         </div>
-      </div>
-
-      <div className="border-t border-white/10">
-        <p className="mx-auto max-w-7xl px-4 py-4 text-xs text-slate-500">
-          © {year} {settings.team_name}. Todos los derechos reservados.
-        </p>
       </div>
     </footer>
   );

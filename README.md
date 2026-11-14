@@ -1,161 +1,202 @@
-# MTB Team Platform — TRINX BOLIVIA · BYCLE SHARKS
+# Trinx Bolivia · Bycle Sharks — Plataforma MTB
 
-Plataforma web del equipo de MTB: sitio público (ciclistas, carreras, ranking,
-noticias, galería, sponsors) + panel admin por roles (deporte, finanzas,
-contenido, auditoría).
+Sitio público y panel interno para el equipo de mountain bike **Trinx Bolivia · Bycle Sharks**
+(Santa Cruz, Bolivia).
+
+- **Sitio público:** portada, equipo, corredores, ranking, carreras, resultados, noticias,
+  galería, auspiciadores y contacto.
+- **Panel privado:** deportivo, contenido, miembros, membresías, aportes, caja, gastos,
+  reportes, usuarios, auditoría y configuración.
+- **Datos reales:** la aplicación no incluye datos de demostración ni resultados ficticios.
+  Todo el contenido se administra desde Supabase y el panel.
 
 ## Stack
 
-- React 19 + Vite + TypeScript
-- Tailwind CSS 4 + React Router 7
-- Supabase (Postgres + Auth + Storage) + Vercel (deploy)
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 19, Vite 8, TypeScript |
+| Estilos | Tailwind CSS 4 |
+| Rutas | React Router 7 |
+| Backend | Supabase (PostgreSQL, Auth, Storage, RLS) |
+| Deploy | Vercel |
 
-## Requisitos
-
-- Node.js 20+ y npm
-- Cuenta Supabase (https://supabase.com)
-- Cuenta Vercel (solo para deploy)
-
-## Instalación local
+## Inicio rápido
 
 ```bash
 npm install
-cp .env.example .env
-# editar .env con URL y ANON KEY de Supabase
+Copy-Item .env.example .env   # PowerShell
+# o: cp .env.example .env
 npm run dev
 ```
 
-Build / preview:
+Completa `.env` con la URL y la clave anónima de tu proyecto Supabase:
+
+```env
+VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
+```
+
+> Nunca uses ni publiques la `service_role` key. La app solo necesita la clave anónima;
+> los permisos reales se aplican con RLS en PostgreSQL.
+
+Scripts disponibles:
 
 ```bash
-npm run build
-npm run preview
+npm run dev      # desarrollo
+npm run build    # TypeScript + build de producción
+npm run preview  # previsualizar dist
+npm run lint     # oxlint
 ```
 
-## Configuración Supabase (resumen)
+## Base de datos
 
-1. Crear proyecto en https://supabase.com → **New project**.
-2. Obtener **Project URL** y **anon public key**:
-   Project Settings → API.
-3. Pegarlas en `.env`:
-   `VITE_SUPABASE_URL=`, `VITE_SUPABASE_ANON_KEY=`.
-4. En Supabase → **SQL Editor → New query**, ejecutar en orden:
-   1. `supabase/schema.sql`
-   2. `supabase/rls.sql`
-   3. `supabase/storage.sql`
-   4. `supabase/seed.sql` (solo demo)
-5. Verificar buckets en **Storage**: `gallery, news, banners, cyclists, sponsors`
-   (todos públicos).
-6. Crear primer admin (ver `docs/primer-admin.md`):
-   Authentication → Add user → copiar UID →
-   `insert into public.profiles (id, email, role, display_name)
-    values ('UID','tu@mail.com','ADMIN','Tu nombre');`
-7. Entrar en `/admin/login`.
+El esquema base está en `supabase/schema.sql`. Las migraciones incrementales están en
+`supabase/migrations/` y deben ejecutarse **después** del esquema base, en este orden:
 
-Guías paso a paso: `docs/supabase-desde-cero.md`, `docs/vercel-desde-cero.md`,
-`docs/primer-admin.md`, `docs/configuracion-inicial.md`.
+1. `supabase/schema.sql`
+2. `supabase/migrations/20261021100000_core_hardening.sql`
+3. `supabase/migrations/20261021101000_finance_and_views.sql`
+4. `supabase/migrations/20261021102000_rls_and_grants.sql`
+5. `supabase/migrations/20261021103000_hardening_followups.sql`
+6. `supabase/seed.sql` *(opcional: categorías base y reglas de puntuación)*
 
-## Variables de entorno
+Puedes ejecutar cada archivo desde **Supabase → SQL Editor → New query**. Las migraciones son
+aditivas e idempotentes; no borran datos existentes.
 
-| Variable | Dónde |
-|---|---|
-| `VITE_SUPABASE_URL` | Supabase → Settings → API → Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase → Settings → API → anon public |
+### Qué agregan las migraciones
 
-En Vercel: Project → Settings → Environment Variables (mismas dos).
+- Restricciones, índices y triggers de integridad para corredores, carreras y resultados.
+- Cálculo de puntos del ranking a partir de `scoring_rules` y `race_results` (el ranking **no**
+  se almacena como tabla).
+- Tablas y RPC transaccionales para membresías, pagos parciales, aportes, caja, gastos,
+  presupuestos, saldo inicial y reversos.
+- Vistas de solo lectura para caja, deuda, resumen de membresías y situación por carrera.
+- RLS por rol, políticas de Storage y auditoría append-only.
+- Protección del último administrador y bootstrap del primer admin.
 
-## Deploy en Vercel
+### Primer administrador
 
-1. Subir repo a GitHub.
-2. Vercel → Add New → Project → importar repo.
-3. Framework: Vite. Build: `npm run build`. Output: `dist`.
-4. Agregar las 2 env vars. Deploy.
+1. En Supabase → **Authentication → Users → Add user**, crea la cuenta con correo y contraseña
+   (marca **Auto Confirm User**).
+2. El trigger `handle_new_user` crea automáticamente su perfil con rol `CONSULTA`.
+3. En **SQL Editor**, promueve el perfil a administrador:
 
-Detalle: `docs/vercel-desde-cero.md`.
-
-## Estructura
-
+```sql
+select public.bootstrap_admin('tu-correo@equipo.com');
 ```
-src/            # app existente (types, services, features...) — no modificar
-supabase/
-  schema.sql    # tablas + índices + triggers
-  rls.sql       # RLS + políticas por rol
-  storage.sql   # buckets + políticas
-  seed.sql      # datos DEMO
-docs/           # guías en español
-.env.example
+
+También puedes hacerlo directo en SQL:
+
+```sql
+update public.profiles
+set role = 'ADMIN'
+where lower(email) = lower('tu-correo@equipo.com');
 ```
+
+4. Ingresa en `/admin/login`.
+
+Las cuentas nuevas se crean **solo desde Supabase Auth**. El panel de usuarios permite
+asignar roles a perfiles existentes, pero no crear credenciales con la clave anónima.
+
+Más detalle: [`docs/primer-admin.md`](docs/primer-admin.md).
 
 ## Roles y permisos
 
-| Rol | Acceso |
+| Rol | Alcance |
 |---|---|
-| `ADMIN` | Todo |
-| `DIRECTIVA` | Lectura sensible (miembros, finanzas) + lectura pública |
-| `TESORERIA` | CRUD finanzas (members, payments, contributions, cash, expenses, budgets) |
-| `EDITOR` | CRUD deporte (cyclists, races, results, scoring...) y contenido (news, banners, sponsors, gallery, settings) |
-| `CONSULTA` | Solo lectura pública |
+| `ADMIN` | Todo el sistema: configuración, usuarios, auditoría y operaciones financieras. |
+| `DIRECTIVA` | Consulta de miembros, membresías y finanzas. Solo lectura; no registra ni revierte movimientos. |
+| `TESORERIA` | Miembros, membresías, aportes, caja, gastos, presupuestos y reportes. |
+| `EDITOR` | Corredores, categorías, carreras, resultados, puntuación y contenido. |
+| `CONSULTA` | Acceso de solo lectura al dashboard; sin módulos de edición ni finanzas. |
 
-Lectura pública (sin login): categorías, ciclistas activos, carreras,
-resultados, scoring, logros, sponsors activos, noticias `PUBLICADO`,
-banners activos, galería publicada, ajustes del sitio.
+Los permisos se aplican dos veces: en la interfaz y en PostgreSQL mediante RLS y RPCs
+`SECURITY DEFINER` con validación de rol. Ocultar un botón no es la única protección.
 
-Tablas sensibles (requieren login + rol): `members`, `membership_payments`,
-`contributions`, `cash_movements`, `expenses`, `race_budgets`, `profiles`,
-`audit_logs` (solo `ADMIN` lee; insertar lo puede cualquier autenticado;
-nadie puede editar/borrar).
+## Integridad financiera
 
-## Reglas de negocio
+- Los montos usan `numeric(12,2)`, no `float`.
+- Cada operación financiera se ejecuta en una transacción de base de datos.
+- Las membresías admiten pagos parciales; el estado (`PENDIENTE`, `PARCIAL`, `PAGADO`,
+  `VENCIDO`) se deriva del monto pagado y la fecha de vencimiento.
+- Los movimientos no se eliminan: se **anulan o revierten** con motivo y quedan en auditoría.
+- El saldo inicial se registra una sola vez y se informa aparte de los ingresos operativos.
+- Los comprobantes de gastos se guardan en el bucket privado `documents` y se abren con
+  enlaces firmados temporales.
+- Solo `ADMIN` y `TESORERIA` pueden registrar o revertir movimientos. `DIRECTIVA` puede
+  consultar y exportar.
 
-- **Puntos automáticos**: al cargar un resultado, copiar `points` desde
-  `scoring_rules` según `position` (1→10, 2→8, 3→6, 4→5, 5→4, 6→3, 7→2, 8→1).
-- **Caja**: `balance = SUM(INGRESO) − SUM(EGRESO)` en `cash_movements`.
-- **Ranking calculado**: se agrega desde `race_results`
-  (puntos totales, carreras, victorias, podios); no es una tabla.
-- **Auditoría**: registrar CREATE/UPDATE/DELETE/LOGIN/LOGOUT en `audit_logs`
-  con `module`, `record_id`, `old_data`/`new_data`.
-- **Mensualidades**: unicidad `(member_id, month, year)`;
-  estados `PAGADO|PENDIENTE|PARCIAL|VENCIDO`.
-- **Inscripciones**: unicidad `(race_id, cyclist_id)`.
+## Ranking
 
-## Usuarios demo
+El ranking público se obtiene de la función `get_ranking(p_year, p_category_id)`, que suma los
+puntos de `race_results` según `scoring_rules`. No existe una tabla de posiciones que pueda
+quedar desactualizada.
 
-El seed no crea usuarios de Auth (Supabase no lo permite desde SQL).
-Crea los perfiles manualmente (ver `docs/primer-admin.md`) y asigna roles:
+- Los puntos se recalculan al cambiar las reglas de puntuación.
+- `DNF`, `DSQ`, `DNS` y resultados anulados no suman puntos.
+- Se admiten posiciones compartidas.
+- La configuración de puntos se administra en **Admin → Puntuación**.
 
-- `admin@demo.bo` → `ADMIN`
-- `tesoreria@demo.bo` → `TESORERIA`
-- `editor@demo.bo` → `EDITOR`
+## Storage
 
-## Cómo eliminar los datos demo
+| Bucket | Uso | Acceso |
+|---|---|---|
+| `gallery` | Galería pública | Público |
+| `news` | Portadas de noticias | Público |
+| `banners` | Banners, logo y hero | Público |
+| `cyclists` | Fotos de corredores | Público |
+| `sponsors` | Logos de auspiciadores | Público |
+| `documents` | Comprobantes de gastos | Privado, enlaces firmados |
 
-Todas las filas demo contienen `DEMO` en algún campo o son las categorías
-base. Para limpiar:
+Las imágenes se validan por tipo real y tamaño, se redimensionan/comprimen en el navegador y se
+suben con nombres aleatorios. La base de datos guarda la referencia (`path`), no el archivo.
 
-```sql
--- Borra en orden por FKs
-delete from public.race_results where notes = 'DEMO';
-delete from public.race_registrations
-where race_id in (select id from public.races where slug like '%2026');
-delete from public.achievements where description like 'DEMO%';
-delete from public.news where title like 'DEMO%';
-delete from public.banners where title like 'DEMO%';
-delete from public.sponsors where name like 'DEMO%';
-delete from public.membership_payments
-where member_id in (select id from public.members where notes = 'DEMO');
-delete from public.members where notes = 'DEMO';
-delete from public.races where slug in
-  ('campeonato-departamental-mtb-2026','municipal-mtb-2026');
-delete from public.cyclists where slug in
-  ('german-amaya','carlos-perez','luis-rodriguez','miguel-rojas');
--- Categorías y scoring: borrar solo si no los usarás en producción
--- delete from public.categories where slug in
---   ('elite','sub-23','junior','master-a','master-b','principiantes');
-update public.site_settings set slogan=null, description=null, history=null
-  where id = 1;
+## Deploy en Vercel
+
+1. Sube el repositorio a GitHub.
+2. En Vercel: **Add New → Project → Import**.
+3. Framework: **Vite**. Build: `npm run build`. Output: `dist`.
+4. Agrega `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en **Environment Variables**
+   (Production, Preview y Development).
+5. Deploy.
+
+`vercel.json` incluye el rewrite de SPA para que las rutas de React Router funcionen al
+refrescar. Más detalle: [`docs/vercel-desde-cero.md`](docs/vercel-desde-cero.md).
+
+## Estructura
+
+```text
+src/
+  components/        # UI, layouts y componentes públicos
+  constants/         # roles, navegación, catálogos y valores por defecto
+  hooks/             # useAsync, debounce, título de página
+  lib/               # cliente Supabase, errores y permisos
+  pages/
+    public/          # sitio público
+    admin/           # panel privado
+  providers/         # Auth, SiteSettings y Toast
+  routes/            # AppRoutes con lazy loading y guards
+  services/          # acceso a datos y RPCs
+  types/             # tipos del dominio
+  utils/             # formato, CSV, validación, imágenes, colores
+supabase/
+  schema.sql         # esquema base
+  migrations/        # hardening, finanzas, RLS y ajustes
+  seed.sql           # seed opcional sin datos ficticios
+docs/                # guías de configuración y deploy
 ```
 
-> Nota: `src/types` y `src/services` usan nombres de columnas distintos a
-> este esquema (p. ej. `is_active` vs `active`, `race_date` vs `date`).
-> Si la app falla al leer, hay que alinear servicios/tipos con esta BD
-> en una tarea aparte (no se tocó `src/` en este cambio).
+## Documentación
+
+- [`docs/supabase-desde-cero.md`](docs/supabase-desde-cero.md)
+- [`docs/primer-admin.md`](docs/primer-admin.md)
+- [`docs/configuracion-inicial.md`](docs/configuracion-inicial.md)
+- [`docs/vercel-desde-cero.md`](docs/vercel-desde-cero.md)
+
+## Notas de operación
+
+- El sitio muestra estados vacíos honestos cuando todavía no hay datos cargados.
+- El contacto público usa enlaces `mailto:` y `wa.me`; no hay un endpoint de formulario falso.
+- Los cambios de rol, pagos, reversos y operaciones de caja quedan registrados en auditoría.
+- Antes de publicar, revisa la configuración del sitio, las políticas de Storage y que las
+  migraciones se hayan ejecutado sin errores en tu proyecto.

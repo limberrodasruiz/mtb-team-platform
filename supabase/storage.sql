@@ -1,4 +1,11 @@
 -- ============================================================
+-- OBSOLETO — NO EJECUTAR EN PROYECTOS NUEVOS.
+-- Usa supabase/migrations/20261021102000_rls_and_grants.sql.
+-- Este archivo se conserva solo como referencia histórica y puede
+-- volver a abrir políticas que la migración actual cierra.
+-- ============================================================
+
+-- ============================================================
 -- MTB Team Platform — storage.sql
 -- Buckets públicos + políticas de lectura/escritura.
 -- Ejecutar DESPUÉS de schema.sql y rls.sql.

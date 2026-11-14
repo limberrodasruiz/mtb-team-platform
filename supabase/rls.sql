@@ -1,4 +1,11 @@
 -- ============================================================
+-- OBSOLETO — NO EJECUTAR EN PROYECTOS NUEVOS.
+-- Usa supabase/migrations/20261021102000_rls_and_grants.sql.
+-- Este archivo se conserva solo como referencia histórica y puede
+-- volver a abrir políticas que la migración actual cierra.
+-- ============================================================
+
+-- ============================================================
 -- MTB Team Platform — rls.sql
 -- Ejecutar DESPUÉS de schema.sql.
 -- Roles: ADMIN todo; DIRECTIVA lectura sensible;

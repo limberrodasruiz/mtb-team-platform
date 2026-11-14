@@ -52,6 +52,7 @@ create table if not exists public.cyclists (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   slug text not null unique,
+  nickname text,
   birth_date date,
   category_id uuid references public.categories (id) on delete set null,
   specialty text,

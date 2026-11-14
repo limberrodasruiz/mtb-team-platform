@@ -1,46 +1,143 @@
+import { ExternalLink, Globe2, Handshake } from 'lucide-react';
 import type { Sponsor } from '../../types';
+import { resolveMediaUrl } from '../../services/storage';
+import { cn } from '../../utils/cn';
 
-interface SponsorGridProps {
-  sponsors: Sponsor[];
-  className?: string;
+function normalizeUrl(value: string | null): string | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
-export function SponsorGrid({ sponsors, className = '' }: SponsorGridProps) {
-  if (sponsors.length === 0) return null;
+function socialEntries(socials: Sponsor['socials']): Array<[string, string]> {
+  return Object.entries(socials ?? {}).filter(
+    (entry): entry is [string, string] =>
+      typeof entry[1] === 'string' && Boolean(entry[1].trim()),
+  );
+}
+
+export function SponsorGrid({
+  sponsors,
+  compact = false,
+}: {
+  sponsors: Sponsor[];
+  compact?: boolean;
+}) {
   return (
-    <ul className={`grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 ${className}`}>
+    <div
+      className={cn(
+        'grid gap-4',
+        compact
+          ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+      )}
+    >
       {sponsors.map((sponsor) => {
-        const content = sponsor.logo_url ? (
-          <img
-            src={sponsor.logo_url}
-            alt={sponsor.name}
-            className="h-16 w-full object-contain"
-            loading="lazy"
-          />
-        ) : (
-          <span className="text-sm font-semibold text-slate-700">{sponsor.name}</span>
-        );
+        const logo = resolveMediaUrl(sponsor.logo_path, sponsor.logo_url, 'sponsors');
+        const website = normalizeUrl(sponsor.website);
+        const socials = socialEntries(sponsor.socials);
+
+        if (compact) {
+          const card = (
+            <div className="flex h-24 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 shadow-sm transition hover:border-[var(--brand-mid)] hover:shadow-md">
+              {logo ? (
+                <img
+                  src={logo}
+                  alt={sponsor.name}
+                  loading="lazy"
+                  className="max-h-12 max-w-full object-contain grayscale transition hover:grayscale-0"
+                />
+              ) : (
+                <span className="text-center font-display text-lg font-bold uppercase tracking-wide text-slate-700">
+                  {sponsor.name}
+                </span>
+              )}
+            </div>
+          );
+          return website ? (
+            <a
+              key={sponsor.id}
+              href={website}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${sponsor.name} (sitio externo)`}
+              className="block"
+            >
+              {card}
+            </a>
+          ) : (
+            <div key={sponsor.id}>{card}</div>
+          );
+        }
+
         return (
-          <li
+          <article
             key={sponsor.id}
-            className="flex h-28 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white p-4"
+            className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[var(--brand-mid)] hover:shadow-md"
           >
-            {sponsor.website_url ? (
-              <a
-                href={sponsor.website_url}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={sponsor.name}
-                className="flex h-full w-full items-center justify-center"
-              >
-                {content}
-              </a>
-            ) : (
-              content
+            <div className="flex h-24 items-center justify-start">
+              {logo ? (
+                <img
+                  src={logo}
+                  alt={sponsor.name}
+                  loading="lazy"
+                  className="max-h-20 max-w-[180px] object-contain"
+                />
+              ) : (
+                <span className="font-display text-2xl font-bold uppercase tracking-wide text-slate-800">
+                  {sponsor.name}
+                </span>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <h3 className="font-display text-xl font-bold uppercase leading-tight text-slate-950">
+                {sponsor.name}
+              </h3>
+              {sponsor.featured && (
+                <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brand-dark)]">
+                  Principal
+                </span>
+              )}
+            </div>
+            {sponsor.support_type && (
+              <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--brand)]">
+                <Handshake className="h-3.5 w-3.5" aria-hidden />
+                {sponsor.support_type}
+              </p>
             )}
-          </li>
+            {sponsor.description && (
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">
+                {sponsor.description}
+              </p>
+            )}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {website && (
+                <a
+                  href={website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--brand-dark)] transition hover:text-[var(--brand)]"
+                >
+                  <Globe2 className="h-3.5 w-3.5" aria-hidden />
+                  Sitio web
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              )}
+              {socials.map(([label, href]) => (
+                <a
+                  key={label}
+                  href={normalizeUrl(href) ?? '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-medium capitalize text-slate-500 transition hover:text-slate-900"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+          </article>
         );
       })}
-    </ul>
+    </div>
   );
 }

@@ -1,48 +1,170 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-500: #0284c7;
-  --color-brand-600: #0369a1;
-  --color-brand-700: #075985;
-  --color-brand-900: #0c4a6e;
-  --color-shark-900: #0a0f1e;
-  --color-shark-800: #121a2e;
-  --font-display: "Inter", system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --color-shark-950: #060b16;
+  --color-shark-900: #0b1220;
+}
+
+:root {
+  --brand: #0f766e;
+  --brand-dark: #0b5c56;
+  --brand-darker: #073e3a;
+  --brand-soft: #f1faf8;
+  --brand-mid: #d6efe9;
+  --brand-contrast: #ffffff;
+  --secondary: #0f172a;
+  --accent: #84cc16;
+  --accent-contrast: #0f172a;
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   background: #f8fafc;
   color: #0f172a;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-.hero-gradient {
-  background: linear-gradient(135deg, #0a0f1e 0%, #0c4a6e 55%, #15803d 130%);
+::selection {
+  background: var(--brand);
+  color: var(--brand-contrast);
 }
 
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+:focus-visible {
+  outline-color: var(--brand);
 }
-.card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px -12px rgba(2, 132, 199, 0.35);
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Decorative topographic pattern used in dark hero sections. */
+.topographic {
+  background-image:
+    radial-gradient(circle at 18% 20%, color-mix(in srgb, var(--brand) 32%, transparent) 0, transparent 42%),
+    radial-gradient(circle at 82% 70%, color-mix(in srgb, var(--accent) 14%, transparent) 0, transparent 38%),
+    repeating-radial-gradient(
+      circle at 80% 30%,
+      transparent 0,
+      transparent 28px,
+      rgba(255, 255, 255, 0.035) 29px,
+      rgba(255, 255, 255, 0.035) 30px
+    );
+}
+
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.hero-fade {
+  background: linear-gradient(
+    100deg,
+    #060b16 0%,
+    color-mix(in srgb, var(--secondary) 96%, #000) 45%,
+    color-mix(in srgb, var(--brand-darker) 88%, #000) 100%
+  );
+}
+
+.card-shine {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand) 8%, white) 0%,
+    white 55%
+  );
+}
+
+.data-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+/* Rich text fallback for content rendered outside the RichText component. */
+.prose-content h2,
+.prose-content h3 {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: #020617;
+}
+
+.prose-content p {
+  margin-top: 0.85rem;
+  line-height: 1.8;
+  color: #475569;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  .print-break {
+    break-inside: avoid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media (max-width: 640px) {
-  .responsive-table thead { display: none; }
-  .responsive-table tr {
+  .responsive-table thead {
+    display: none;
+  }
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
     display: block;
+    width: 100%;
+  }
+  .responsive-table tr {
+    margin-bottom: 0.75rem;
     border: 1px solid #e2e8f0;
     border-radius: 0.75rem;
-    margin-bottom: 0.75rem;
-    padding: 0.75rem;
+    padding: 0.875rem;
     background: white;
   }
   .responsive-table td {
     display: flex;
     justify-content: space-between;
+    gap: 1rem;
+    border: 0;
     padding: 0.35rem 0;
+    text-align: right;
+  }
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #64748b;
+    text-align: left;
   }
 }

@@ -1,13 +1,19 @@
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
 import { AppRoutes } from './routes/AppRoutes';
+import { ToastProvider } from './providers/ToastProvider';
+import { SiteSettingsProvider } from './providers/SiteSettingsProvider';
+import { AuthProvider } from './providers/AuthProvider';
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ToastProvider>
+        <SiteSettingsProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </SiteSettingsProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
